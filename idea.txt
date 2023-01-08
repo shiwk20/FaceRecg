@@ -1,0 +1,9 @@
+思路：
+align部分，采用dlib和ldm用过的align方法；
+loss部分，把训练集分成三元组采用triplet loss(复习13章度量学习)。此处的重点是三元组的选择
+model部分，参考其他模型，魔改一个出来。
+
+可能的改进（等现有的做完之后再尝试）：
+1.像lyy所说，采用其他的Contrastive Learning loss等
+2.学习cosFace，每个人作为一个类，然后cross entropy loss
+3.基于特征选择或数据降维的人脸验证
