@@ -45,9 +45,9 @@ class Block(nn.Module):
         out = self.bn3(out)
 
         if self.down_sample:
-            out += self.downsample(x)
+            out = out + self.downsample(x)
         else:
-            out += x
+            out = out + x
         
         out = F.relu(out)
         return out

@@ -13,6 +13,7 @@ from torch.optim import lr_scheduler
 from evaluate import evaluate
 from tqdm import tqdm
 import torch.distributed as dist
+torch.autograd.set_detect_anomaly(True)
 
 
 def main():
