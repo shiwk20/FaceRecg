@@ -5,7 +5,7 @@ import os
 import random
 from PIL import Image
 
-def process_image(image):
+def process_image(image, rsize):
     if not image.mode == 'RGB':
         image = image.convert('RGB')
     image = np.array(image).astype(np.uint8)
@@ -14,11 +14,12 @@ def process_image(image):
     
 # produce triplet images
 class TripletTrainDataset(Dataset):
-    def __init__(self, idx_path, img_path, triplets_num) -> None:
+    def __init__(self, idx_path, triplets_num, align_type, align_size, rsize) -> None:
         super().__init__()
-        self.img_path = img_path
+        self.img_path = f'data/train/{align_type}/align{align_size}x{align_size}'
         self.idx_path = idx_path
         self.triplets_num = triplets_num
+        self.rsize = rsize
         self.train_indexes = json.load(open(idx_path, 'r'))
         self.triplets = {}
         
@@ -46,13 +47,6 @@ class TripletTrainDataset(Dataset):
         
     def __len__(self):
         return self.triplets_num
-    
-    def process_image(self, image):
-        if not image.mode == 'RGB':
-            image = image.convert('RGB')
-        image = np.array(image).astype(np.uint8)
-        image = (image / 127.5 - 1.0).astype(np.float32)   
-        return image
             
     def __getitem__(self, index):
         batch = {}
@@ -70,11 +64,12 @@ class TripletTrainDataset(Dataset):
 
 # produce pair images
 class TripletValDataset(Dataset):
-    def __init__(self, idx_path, img_path, pairs_num) -> None:
+    def __init__(self, idx_path, pairs_num, align_type, align_size, rsize) -> None:
         super().__init__()
-        self.img_path = img_path
+        self.img_path = f'data/train/{align_type}/align{align_size}x{align_size}'
         self.idx_path = idx_path
         self.pairs_num = pairs_num
+        self.rsize = rsize
         self.val_indexes = json.load(open(idx_path, 'r'))
         self.pairs = {}
         

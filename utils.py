@@ -21,6 +21,7 @@ def get_folder_num(path):
 def area(mtcnn):
     return -np.prod(mtcnn['box'][-2:])
 
+# b, c
 def L2_dist(vec1, vec2):
     return torch.sum(torch.square(vec1 - vec2), dim = 1)
 

@@ -1,24 +1,39 @@
 model:
   dest: model.FaceRecg
   paras:
-    ckpt_path: None
-    alpha: 1
+    ckpt_path: 'checkpoints/resnet50-0676ba61.pth'
+    save_ckpt_path: log/triplet
     loss_type: triplet
     max_epochs: 500
+    val_interval: 5
 
 data:
   divide_seed: 0
-  batch_size: 16
+  batch_size: 64
   num_workers: 8
   train:
     dest: dataset.TripletTrainDataset
     paras: 
       idx_path: data/train/train_indexes.json
-      img_path: data/train/training_set
       triplets_num: 60000
+      align_type: 'mtcnn'
+      align_size: 112
   validation:
     dest: dataset.TripletValDataset
     paras: 
       idx_path: data/train/val_indexes.json
-      img_path: data/train/training_set
       pairs_num: 5000
+      align_type: 'mtcnn'
+      align_size: 112
+
+loss:
+  dest: loss.TripletLoss
+  paras:
+    alpha: 0.2
+
+optimizer:
+  lr: 0.001
+
+scheduler:
+  step_size: 10
+  gamma: 0.1

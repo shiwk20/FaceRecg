@@ -22,7 +22,7 @@ test_align_lmk_path = 'data/test/landmark/align112x112'
 test_lmk_path = 'data/test/landmark/landmarks'
 
 mtcnn_crop_size = (96, 112) # (W, H)
-lmk_crop_size = 112 # (W, H)
+lmk_crop_size = 112 # (W, H) must be square
 
 template = np.float32([ [0.        , 0.17856914], [0.00412831, 0.31259227],
                         [0.0196793 , 0.44770938], [0.04809872, 0.5800727 ],

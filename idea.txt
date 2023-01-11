@@ -7,3 +7,5 @@ model部分，参考其他模型，魔改一个出来。
 1.像lyy所说，采用其他的Contrastive Learning loss等
 2.学习cosFace，每个人作为一个类，然后cross entropy loss
 3.基于特征选择或数据降维的人脸验证
+
+model以resnet50为backbone，这是参考https://blog.csdn.net/m0_50127633/article/details/117200212
