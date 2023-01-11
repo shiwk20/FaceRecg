@@ -5,26 +5,28 @@ import os
 import random
 from PIL import Image
 
-def process_image(image, rsize):
+def process_image(image):
     if not image.mode == 'RGB':
         image = image.convert('RGB')
     image = np.array(image).astype(np.uint8)
     image = (image / 127.5 - 1.0).astype(np.float32)   
+    image = image.transpose(2, 0, 1)
     return image
     
 # produce triplet images
 class TripletTrainDataset(Dataset):
-    def __init__(self, idx_path, triplets_num, align_type, align_size, rsize) -> None:
+    def __init__(self, idx_path, triplets_num, align_type, align_size) -> None:
         super().__init__()
-        self.img_path = f'data/train/{align_type}/align{align_size}x{align_size}'
+        align_size_0 = int(align_size.split(',')[0])
+        align_size_1 = int(align_size.split(' ')[1])
+        self.img_path = f'data/train/{align_type}/align{align_size_0}x{align_size_1}'
         self.idx_path = idx_path
         self.triplets_num = triplets_num
-        self.rsize = rsize
         self.train_indexes = json.load(open(idx_path, 'r'))
         self.triplets = {}
         
+        print('get triplets...')
         for i in range(triplets_num):
-            print('triplet: ', i)
             tmp_triplet = self.get_triplet()
             self.triplets[i] = tmp_triplet
     
@@ -40,9 +42,9 @@ class TripletTrainDataset(Dataset):
             neg_name = random.choice(list(self.train_indexes.keys()))
         neg_idx = random.choice(self.train_indexes[neg_name])
         
-        triplet['anc_path'] = os.path.join(anc_name, anc_idx)
-        triplet['pos_path'] = os.path.join(anc_name, pos_idx)
-        triplet['neg_path'] = os.path.join(neg_name, neg_idx)
+        triplet['anc_path'] = os.path.join(os.path.basename(anc_name), anc_idx)
+        triplet['pos_path'] = os.path.join(os.path.basename(anc_name), pos_idx)
+        triplet['neg_path'] = os.path.join(os.path.basename(neg_name), neg_idx)
         return triplet
         
     def __len__(self):
@@ -51,11 +53,11 @@ class TripletTrainDataset(Dataset):
     def __getitem__(self, index):
         batch = {}
         
-        anc_image = Image.open(self.triplets[index]['anc_path'])
+        anc_image = Image.open(os.path.join(self.img_path, self.triplets[index]['anc_path']))
         anc_image = process_image(anc_image)
-        pos_image = Image.open(self.triplets[index]['pos_path'])
+        pos_image = Image.open(os.path.join(self.img_path, self.triplets[index]['pos_path']))
         pos_image = process_image(pos_image)
-        neg_image = Image.open(self.triplets[index]['neg_path'])
+        neg_image = Image.open(os.path.join(self.img_path, self.triplets[index]['neg_path']))
         neg_image = process_image(neg_image)
         
         batch['anc'], batch['pos'], batch['neg'] = anc_image, pos_image, neg_image
@@ -64,15 +66,17 @@ class TripletTrainDataset(Dataset):
 
 # produce pair images
 class TripletValDataset(Dataset):
-    def __init__(self, idx_path, pairs_num, align_type, align_size, rsize) -> None:
+    def __init__(self, idx_path, pairs_num, align_type, align_size) -> None:
         super().__init__()
-        self.img_path = f'data/train/{align_type}/align{align_size}x{align_size}'
+        align_size_0 = int(align_size.split(',')[0])
+        align_size_1 = int(align_size.split(' ')[1])
+        self.img_path = f'data/train/{align_type}/align{align_size_0}x{align_size_1}'
         self.idx_path = idx_path
         self.pairs_num = pairs_num
-        self.rsize = rsize
         self.val_indexes = json.load(open(idx_path, 'r'))
         self.pairs = {}
         
+        print('get pairs...')
         for i in range(pairs_num // 2):
             tmp_pair = self.get_pos_pair()
             # remove duplication
@@ -94,8 +98,8 @@ class TripletValDataset(Dataset):
             anc_name = random.choice(list(self.val_indexes.keys()))
         anc_idx, pos_idx = random.sample(self.val_indexes[anc_name], 2)
 
-        pair['A'] = os.path.join(anc_name, anc_idx)
-        pair['B'] = os.path.join(anc_name, pos_idx)
+        pair['A'] = os.path.join(os.path.basename(anc_name), anc_idx)
+        pair['B'] = os.path.join(os.path.basename(anc_name), pos_idx)
         pair['label'] = 1
         return pair
         
@@ -105,18 +109,20 @@ class TripletValDataset(Dataset):
         anc_idx = random.choice(self.val_indexes[anc_name])
         neg_idx = random.choice(self.val_indexes[neg_name])
         
-        pair['A'] = os.path.join(anc_name, anc_idx)
-        pair['B'] = os.path.join(neg_name, neg_idx)
+        pair['A'] = os.path.join(os.path.join(os.path.basename(anc_name), anc_idx))
+        pair['B'] = os.path.join(os.path.join(os.path.basename(neg_name), neg_idx))
         pair['label'] = 0
         return pair
         
-        
+    def __len__(self):
+        return self.pairs_num
+    
     def __getitem__(self, index):
         batch = {}
         
-        A_image = Image.open(self.pairs[index]['A'])
+        A_image = Image.open(os.path.join(self.img_path, self.pairs[index]['A']))
         A_image = process_image(A_image)
-        B_image = Image.open(self.pairs[index]['B'])
+        B_image = Image.open(os.path.join(self.img_path, self.pairs[index]['B']))
         B_image = process_image(B_image)
         
         batch['A'], batch['B'], batch['label'] = A_image, B_image, self.pairs[index]['label']

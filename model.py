@@ -55,9 +55,12 @@ class Block(nn.Module):
 
 # download pretrained model of resnet50(Imagenet): https://download.pytorch.org/models/resnet50-0676ba61.pth
 class FaceRecg(nn.Module):
-    def __init__(self, embed_size: int = 512):
+    def __init__(self, ckpt_path, save_ckpt_path, max_epochs, val_interval, embed_size: int = 512):
         super().__init__()
-        
+        self.ckpt_path = ckpt_path
+        self.save_ckpt_path = save_ckpt_path
+        self.max_epochs = max_epochs
+        self.val_interval = val_interval
         self.conv1 = nn.Conv2d(3, 64, kernel_size = 7, stride = 2, padding = 3, bias = False)
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
@@ -68,7 +71,7 @@ class FaceRecg(nn.Module):
         self.layer4 = make_layer(1024, 2048, block_num = 3, stride = 2)
         
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc = nn.Linear(2048, embed_size)
+        self.emb = nn.Linear(2048, embed_size)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -83,7 +86,7 @@ class FaceRecg(nn.Module):
         x = self.avgpool(x)
         
         x = x.flatten(1)
-        x = self.fc(x)
+        x = self.emb(x)
         
         return x
 
@@ -112,7 +115,10 @@ class FaceRecg(nn.Module):
                 'best_accuracy': best_accuracy, 'optimizer': optimizer.state_dict()}
         
         os.makedirs(save_path, exist_ok = True)
-        save_path = os.path.join(save_path, f"epoch_{epoch}.pth")
+        if epoch == -1:
+            save_path = os.path.join(save_path, "last_acc_{best_accuracy}.pth")
+        else:
+            save_path = os.path.join(save_path, f"epoch_{epoch}_acc_{best_accuracy}.pth")
         torch.save(states, save_path)
 
 if __name__ == "__main__":

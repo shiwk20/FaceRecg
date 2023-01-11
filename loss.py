@@ -11,7 +11,7 @@ class TripletLoss(nn.Module):
     def forward(self, anc, pos, neg):
         pos_dist = L2_dist(anc, pos)
         neg_dist = L2_dist(anc, neg)
-        return torch.mean(max(pos_dist - neg_dist + self.alpha, 0))
+        return torch.mean(torch.clamp(pos_dist - neg_dist + self.alpha, min=0.0))
 
     def get_hard(self, anc, pos, neg):
         pos_dist = L2_dist(anc, pos)
