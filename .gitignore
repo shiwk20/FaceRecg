@@ -1,5 +1,6 @@
 /checkpoints/
 __pycache__/
+.vscode/
 *.zip
 /data/test/
 /data/train/
