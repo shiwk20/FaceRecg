@@ -1,0 +1,13 @@
+model:
+  dest: model.FaceRecg
+  paras:
+  lr: 1e-4
+  ckpt_path: None
+  alpha: 1
+  loss_type: classifier
+
+dataset:
+  dest: dataset.
+  paras: 
+    batch_size: 16
+    num_workers: 8

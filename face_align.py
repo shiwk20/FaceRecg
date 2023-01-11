@@ -132,9 +132,9 @@ def face_align_lmk():
             for img in img_list: # *.npy
                 image = cv2.imread(os.path.join(data_path, name, img.replace('npy', 'jpg')))
                 landmark = np.float32(np.load(os.path.join(lmk_path, name, img)))
-                landmark_indices = np.array([39, 42, 57]) # inner eyes and bottom lip
+                landmark_indexes = np.array([39, 42, 57]) # inner eyes and bottom lip
                 
-                affine_matrix = cv2.getAffineTransform(landmark[landmark_indices], lmk_crop_size * template[landmark_indices])
+                affine_matrix = cv2.getAffineTransform(landmark[landmark_indexes], lmk_crop_size * template[landmark_indexes])
                 aligned_img = cv2.warpAffine(image, affine_matrix, (lmk_crop_size, lmk_crop_size))
 
                 os.makedirs(os.path.join(align_path, name), exist_ok=True)

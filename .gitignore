@@ -1,0 +1,9 @@
+/checkpoints/
+__pycache__/
+*.zip
+/data/test/
+/data/train/
+
+test.*
+!test.py
+*.swp

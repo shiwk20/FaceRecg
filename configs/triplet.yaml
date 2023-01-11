@@ -1,0 +1,24 @@
+model:
+  dest: model.FaceRecg
+  paras:
+    ckpt_path: None
+    alpha: 1
+    loss_type: triplet
+    max_epochs: 500
+
+data:
+  divide_seed: 0
+  batch_size: 16
+  num_workers: 8
+  train:
+    dest: dataset.TripletTrainDataset
+    paras: 
+      idx_path: data/train/train_indexes.json
+      img_path: data/train/training_set
+      triplets_num: 60000
+  validation:
+    dest: dataset.TripletValDataset
+    paras: 
+      idx_path: data/train/val_indexes.json
+      img_path: data/train/training_set
+      pairs_num: 5000
