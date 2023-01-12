@@ -9,9 +9,44 @@ from utils import instantiation, get_logger
 import os
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from utils import divide_train_val
+import json
+import argparse
 
-
-
+def get_dists(model, val_dataloader, device):
+    labels = []
+    dists = []
+    
+    with torch.no_grad():
+        for batch in tqdm(val_dataloader, desc='get distance', leave=False):
+            A_img, B_img = batch['A'].to(device), batch['B'].to(device)
+            A_fea, B_fea = model(A_img), model(B_img)
+            distance = L2_dist(A_fea, B_fea)
+            
+            dists += distance.cpu().numpy().tolist()
+            labels += batch['label'].cpu().numpy().tolist()
+    return dists, labels
+    
+# given threhold, cal the accuracy of all dataset
+def eval_all(model, val_dataloader, device, threshold = -1):
+    dists, labels = get_dists(model, val_dataloader, device)
+    
+    print(len(dists))
+    if threshold == -1:
+        threshold, accuracy = find_best_threhold(np.arange(0, 5, 0.01), dists, labels)
+    else:
+        accuracy = get_accuracy(threshold, dists, labels)
+    return accuracy, threshold
+            
+def find_best_threhold(thresholds, dists, labels):
+    best_accuracy = 0
+    for threshold in thresholds:
+        accuracy = get_accuracy(threshold, dists, labels)
+        if accuracy > best_accuracy:
+            best_accuracy = accuracy
+            best_threshold = threshold
+    return best_threshold, best_accuracy
+    
 def get_accuracy(threshold, dists, labels):
     pred = []
     for dist in dists:
@@ -21,57 +56,49 @@ def get_accuracy(threshold, dists, labels):
     return accuracy
 
 def evaluate(model, val_dataloader, logger, device):
-    labels = []
-    dists = []
-
-    with torch.no_grad():
-        for batch in tqdm(val_dataloader, desc='get distance', leave=False):
-            A_img, B_img = batch['A'].to(device), batch['B'].to(device)
-            A_fea, B_fea = model(A_img), model(B_img)
-            distance = L2_dist(A_fea, B_fea)
-            
-            dists += distance.cpu().numpy().tolist()
-            labels += batch['label'].cpu().numpy().tolist()
+    dists, labels = get_dists(model, val_dataloader, device)
 
     Accuracies = []
     Thresholds = []
-    kf = KFold(n_splits=10, shuffle=False)
-    thresholds = np.arange(-1.0, 1.0, 0.01)
+    kf = KFold(n_splits=10, shuffle=True)
+    thresholds = np.arange(0, 5, 0.01)
     
-    tqdm_kf = tqdm(kf.split(dists) ,leave=False)
-    for train_indexes, test_indexes in tqdm_kf:
-        best_accuracy = 0
-        for threshold in thresholds:
-            accuracy = get_accuracy(threshold, np.array(dists)[train_indexes], np.array(labels)[train_indexes])
-            if accuracy > best_accuracy:
-                best_accuracy = accuracy
-                best_threshold = threshold
-        tqdm_kf.set_description('Accuracy: {:.4f} Threshold: {:.4f}'.format(best_accuracy, best_threshold))
-        
+    for train_indexes, test_indexes in kf.split(dists):
+        best_threshold, best_accuracy = find_best_threhold(thresholds, np.array(dists)[train_indexes], np.array(labels)[train_indexes])
+        print('best acc on train_set:', best_accuracy, 'best threshold on train set:', best_threshold)
         Accuracies.append(get_accuracy(best_threshold, np.array(dists)[test_indexes], np.array(labels)[test_indexes]))
         Thresholds.append(best_threshold)
-
-    logger.info('Accuracy: {:.4f} Threshold: {:.4f}'.format(np.mean(accuracy), np.mean(thresholds)))
-
-    return np.mean(accuracy)
+    print('test accuracy:',Accuracies, 'test threshold:', Thresholds)
+    logger.info('Accuracy: {:.4f} Threshold: {:.4f}'.format(np.mean(Accuracies), np.mean(Thresholds)))
+    return np.mean(Accuracies)
 
 if __name__ == '__main__':
     logger = get_logger('evaluate')
-    device = 'cpu'
-    config = OmegaConf.load('configs/triplet.yaml')
+    device = 'cuda:7'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
+    args = parser.parse_args()
+    config_path = f'configs/train_{args.type}.yaml'
+    config = OmegaConf.load(config_path)
+    
     model = instantiation(config.model)
     if os.path.isfile(model.ckpt_path):
-        cur_epoch, optim_state_dict = model.load_ckpt(model.ckpt_path, logger)
+        _, _ = model.load_ckpt(model.ckpt_path, logger)
     model.eval()
     model.to(device)
     
-    val_dataset = instantiation(config.data.validation)
-    val_dataloader = DataLoader(val_dataset,
+    all_indexes = json.load(open(f'data/train/{args.type}/all_indexes.json', 'r'))
+    all_indexes = {'val_indexes': all_indexes}
+    
+    all_dataset = instantiation(config.data.validation, all_indexes)
+    all_dataloader = DataLoader(all_dataset,
                                 batch_size = config.data.batch_size,
-                                shuffle = True, # must use False, see https://blog.csdn.net/Caesar6666/article/details/126893353
+                                shuffle = True, 
                                 num_workers = config.data.num_workers,
                                 pin_memory = True,
                                 drop_last = False)
-    accuracy = evaluate(model, val_dataloader, logger, device)
-    logger.info('Accuracy: {:.4f}'.format(accuracy))
     
+    accuracy, threshold = eval_all(model, all_dataloader, device)
+    logger.info('Accuracy: {:.4f}, Threshold: {:.4f}'.format(accuracy, threshold))
+    
+    # accuracy = evaluate(model, val_dataloader, logger, device)

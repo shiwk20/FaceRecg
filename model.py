@@ -53,14 +53,12 @@ class Block(nn.Module):
         return out
 
 
-# download pretrained model of resnet50(Imagenet): https://download.pytorch.org/models/resnet50-0676ba61.pth
 class FaceRecg(nn.Module):
-    def __init__(self, ckpt_path, save_ckpt_path, max_epochs, val_interval, embed_size: int = 512):
+    def __init__(self, ckpt_path, save_ckpt_path, embed_size: int = 128):
         super().__init__()
+        self.start_time = None
         self.ckpt_path = ckpt_path
         self.save_ckpt_path = save_ckpt_path
-        self.max_epochs = max_epochs
-        self.val_interval = val_interval
         self.conv1 = nn.Conv2d(3, 64, kernel_size = 7, stride = 2, padding = 3, bias = False)
         self.bn1 = nn.BatchNorm2d(64)
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
@@ -94,6 +92,7 @@ class FaceRecg(nn.Module):
         states = torch.load(ckpt_path, map_location="cpu")
         if "state_dict" in list(states.keys()):
             state_dict = states["state_dict"]
+            self.start_time = os.path.dirname(ckpt_path).split('/')[-1]
         else:
             state_dict = states
         missing, unexpected = self.load_state_dict(state_dict, strict = False)
@@ -110,16 +109,19 @@ class FaceRecg(nn.Module):
         return cur_epoch, optim_state_dict
         
 
-    def save_ckpt(self, save_path, epoch, best_accuracy, optimizer, logger):
+    def save_ckpt(self, save_path, epoch, best_accuracy, optimizer, logger, start_time):
         states = {'state_dict': self.state_dict(), 'epoch': epoch, 
                 'best_accuracy': best_accuracy, 'optimizer': optimizer.state_dict()}
-        
+        if self.start_time is not None:
+            start_time = self.start_time
+        save_path = os.path.join(save_path, start_time)
         os.makedirs(save_path, exist_ok = True)
         if epoch == -1:
-            save_path = os.path.join(save_path, "last_acc_{best_accuracy}.pth")
+            save_path = os.path.join(save_path, "last_acc_{:.4f}.pth".format(best_accuracy))
         else:
-            save_path = os.path.join(save_path, f"epoch_{epoch}_acc_{best_accuracy}.pth")
+            save_path = os.path.join(save_path, "epoch_{}_acc_{:4f}.pth".format(epoch, best_accuracy))
         torch.save(states, save_path)
+        logger.info('save ckpt to {}'.format(save_path))
 
 if __name__ == "__main__":
     model = FaceRecg(embed_size = 512)

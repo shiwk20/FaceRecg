@@ -4,6 +4,8 @@ import time
 import logging
 import importlib
 import torch
+import random
+import json
 
 
 def get_folder_num(path):
@@ -23,9 +25,9 @@ def area(mtcnn):
 
 # b, c
 def L2_dist(vec1, vec2):
-    return torch.sum(torch.square(vec1 - vec2), dim = 1)
+    return torch.sqrt(torch.sum(torch.square(vec1 - vec2), dim = 1))
 
-def get_logger(type, log_path = 'log'):
+def get_logger(type, log_path = 'log/logs'):
     logger = logging.getLogger()
     logfile = os.path.join(log_path, '{}_{}.log'.format(type, time.strftime('%m-%d-%H-%M-%S')))
     logging.basicConfig(level = logging.INFO, format = \
@@ -33,14 +35,18 @@ def get_logger(type, log_path = 'log'):
     logging.root.addHandler(logging.StreamHandler())
     return logger
 
-def instantiation(config):
+def instantiation(config, args = {}):
     assert 'dest' in config, 'No dest key in config'
     dest, name = config["dest"].rsplit(".", 1)
     module = importlib.import_module(dest)
-    return getattr(module, name)(**config.get("paras", dict()))
+    return getattr(module, name)(**config.get("paras", dict()), **args)
     
-def get_train_indexes(train_img_path = 'data/train/training_set'):
+def get_train_indexes(align_type):
     tmp = {}
+    if align_type == 'landmark':
+        train_img_path = 'data/train/landmark/align112x112'
+    else:
+        train_img_path = 'data/train/mtcnn/align112x96'
     for root, dirs, files in os.walk(train_img_path):
         if root == train_img_path:
             continue
@@ -50,3 +56,24 @@ def get_train_indexes(train_img_path = 'data/train/training_set'):
     for train_data in tmp:
         train_indexes[train_data[0]] = train_data[1]
     return train_indexes
+
+def divide_train_val(seed, align_type, train_ratio = 0.8, local_rank = 0):
+    all_indexes = get_train_indexes(align_type)
+    
+    random.seed(seed)
+    train_indexes = random.sample(list(all_indexes.keys()), int(len(all_indexes) * train_ratio))
+    val_indexes = list(set(all_indexes.keys()) - set(train_indexes))
+    
+    train_indexes_tmp = {}
+    for key in train_indexes:
+        train_indexes_tmp[key] = all_indexes[key]
+        
+    val_indexes_tmp = {}
+    for key in val_indexes:
+        val_indexes_tmp[key] = all_indexes[key]
+    
+    if local_rank == 0:
+        json.dump(train_indexes_tmp, open(f'data/train/{align_type}/train_indexes.json', 'w'), indent=4)
+        json.dump(val_indexes_tmp, open(f'data/train/{align_type}/val_indexes.json', 'w'),  indent=4)
+    
+    return train_indexes_tmp, val_indexes_tmp

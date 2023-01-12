@@ -1,0 +1,36 @@
+model:
+  dest: model.FaceRecg
+  paras:
+    ckpt_path: ''
+    save_ckpt_path: log/ckpt
+    embed_size: 128
+
+val_interval: 2
+
+data:
+  batch_size: 150
+  num_workers: 0
+  train:
+    dest: dataset.TripletTrainDataset
+    paras: 
+      triplets_num: 60000
+      align_type: 'mtcnn'
+      align_size: 112, 96
+  validation:
+    dest: dataset.TripletValDataset
+    paras: 
+      pairs_num: 10000
+      align_type: 'mtcnn'
+      align_size: 112, 96
+
+loss:
+  dest: loss.TripletLoss
+  paras:
+    alpha: 0.2
+
+optimizer:
+  max_epochs: 50
+  warm_up_epochs: 10
+  min_lr: 1e-6
+  max_lr: 1e-3
+  base_lr: 1e-4

@@ -1,0 +1,16 @@
+model:
+  dest: model.FaceRecg
+  paras:
+    ckpt_path: 'log/ckpt/01-13_00-44-42/last_acc_0.9780.pth'
+    save_ckpt_path: log/ckpt
+    embed_size: 128
+
+data:
+  batch_size: 128
+  num_workers: 8
+  validation:
+    dest: dataset.TripletValDataset
+    paras: 
+      pairs_num: 50000
+      align_type: 'landmark'
+      align_size: 112, 112
