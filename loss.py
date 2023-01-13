@@ -25,7 +25,7 @@ class TripletLoss(nn.Module):
         return hard_indexes
     
 if __name__ == '__main__':
-    criterion = TripletLoss(0.2)
+    criterion = TripletLoss(1)
     a = torch.randn(64, 512)
     b = torch.randn(64, 512)
     c = torch.randn(64, 512)

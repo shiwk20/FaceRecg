@@ -161,9 +161,9 @@ def main():
                     logger.info('accuracy_flag: {}'.format(accuracy_flag))
                     if accuracy_flag >= 5:
                         break
-                logger.info('Epoch: {}, Loss: {:.4f}, Accuracy: {:.4f}, Best Accuracy: {:.4f}'.format(epoch, epoch_loss, accuracy, best_accuracy))
+                logger.info('Epoch: {}, Loss: {:.4f}, lr: {:.4f}, Accuracy: {:.4f}, Best Accuracy: {:.4f}'.format(epoch, epoch_loss, optimizer.param_groups[0]['lr'], accuracy, best_accuracy))
             else:
-                logger.info('Epoch: {}, Loss: {:.4f}'.format(epoch, epoch_loss))
+                logger.info('Epoch: {}, Loss: {:.4f}, lr: {:.4f}'.format(epoch, epoch_loss, optimizer.param_groups[0]['lr']))
 
             if Flag:
                 counter_flag += 1
@@ -200,7 +200,7 @@ def train(optimizer, scheduler, epoch, model, criterion, train_dataloader, logge
     
     scheduler.step()
     logger.info('counter: {}'.format(counter))
-    if counter < 50:
+    if counter < 20:
         Flag = True
     return (ave_loss / counter, Flag) if counter != 0 else (0, Flag)
     

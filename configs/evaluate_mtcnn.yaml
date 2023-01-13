@@ -1,7 +1,7 @@
 model:
   dest: model.FaceRecg
   paras:
-    ckpt_path: 'log/ckpt/01-12_22-09-28/last_acc_0.9812.pth'
+    ckpt_path: 'log/ckpt/01-13_20-35-56/last_acc_0.8693.pth'
     save_ckpt_path: log/ckpt
     embed_size: 128
 
@@ -11,6 +11,6 @@ data:
   validation:
     dest: dataset.TripletValDataset
     paras: 
-      pairs_num: 20000
+      pairs_num: 10000
       align_type: 'mtcnn'
       align_size: 112, 96

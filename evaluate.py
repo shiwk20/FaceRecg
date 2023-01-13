@@ -50,7 +50,7 @@ def evaluate(model, val_dataloader, logger, device):
     Accuracies = []
     Thresholds = []
     kf = KFold(n_splits=10, shuffle=True)
-    thresholds = np.arange(0, 5, 0.01)
+    thresholds = np.arange(0, 10, 0.01)
     
     for train_indexes, test_indexes in kf.split(dists):
         best_threshold, best_accuracy = find_best_threhold(thresholds, np.array(dists)[train_indexes], np.array(labels)[train_indexes])
@@ -63,13 +63,13 @@ def evaluate(model, val_dataloader, logger, device):
 
 if __name__ == '__main__':
     logger = get_logger('evaluate')
-    device = 'cuda:7'
+    device = 'cuda:1'
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
-    parser.add_argument('-r', '--train_ratio', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
-    parser.add_argument('-s', '--seed', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
+    parser.add_argument('-r', '--train_ratio', help = 'align type(mtcnn or landmark), default: 0.85', type = int, default = 0.85)
+    parser.add_argument('-s', '--seed', help = 'align type(mtcnn or landmark), default: 0', type = int, default = 0)
     args = parser.parse_args()
-    config_path = f'configs/train_{args.type}.yaml'
+    config_path = f'configs/evaluate_{args.type}.yaml'
     config = OmegaConf.load(config_path)
     
     model = instantiation(config.model)
@@ -79,6 +79,7 @@ if __name__ == '__main__':
     model.to(device)
 
     _, val_indexes = divide_train_val(seed = 0, align_type = args.type, train_ratio = args.train_ratio)
+    val_indexes = {'val_indexes': val_indexes}
     val_dataset = instantiation(config.data.validation, val_indexes)
     val_dataloader = DataLoader(val_dataset,
                                 batch_size = config.data.batch_size,

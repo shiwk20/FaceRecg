@@ -57,7 +57,7 @@ def get_train_indexes(align_type):
         train_indexes[train_data[0]] = train_data[1]
     return train_indexes
 
-def divide_train_val(seed, align_type, train_ratio = 0.9, device = 0):
+def divide_train_val(seed, align_type, train_ratio = 0.85, device = 0):
     all_indexes = get_train_indexes(align_type)
     
     random.seed(seed)

@@ -2,7 +2,7 @@ import torch.backends.cudnn as cudnn
 cudnn.benchmark = True
 import torch
 import numpy as np
-from utils import L2_dist
+from utils import L2_dist, divide_train_val
 from omegaconf import OmegaConf
 from utils import instantiation, get_logger
 import os
@@ -19,7 +19,7 @@ def eval_all(model, dataloader, device, threshold = -1):
     
     print(len(dists))
     if threshold == -1:
-        threshold, accuracy = find_best_threhold(np.arange(0, 5, 0.01), dists, labels)
+        threshold, accuracy = find_best_threhold(np.arange(0, 10, 0.01), dists, labels)
     else:
         accuracy = get_accuracy(threshold, dists, labels)
     return accuracy, threshold
@@ -30,18 +30,14 @@ def test(model, test_dataloader, all_dataloader, logger, device, align_type):
     logger.info('train accuracy: {}'.format(train_accuracy))
     
     dists, labels = get_dists(model, test_dataloader, device)
-    best_threhold = 3
     pred = {}
     for idx, dist in enumerate(dists):
         pred[labels[idx]] = 1 if dist < best_threhold else 0
-    logger.info(len(pred))
     
     f = open(f"test_{align_type}.txt", 'w') 
     for i in range(len(pred)):
         print(pred[i], file = f)
     f.close()
-    logger.info(pred)
-    
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser()
@@ -50,7 +46,7 @@ if __name__ == '__main__':
     logger = get_logger('test')
     logger.info('align_type: {}'.format(args.type))
     
-    device = 'cuda:7'
+    device = 'cuda:1'
     config = OmegaConf.load(f'configs/test_{args.type}.yaml')
     model = instantiation(config.model)
     if os.path.isfile(model.ckpt_path):
