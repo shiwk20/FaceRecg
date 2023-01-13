@@ -10,3 +10,4 @@ test.*
 !test.py
 !test.txt
 *.swp
+idea.txt
