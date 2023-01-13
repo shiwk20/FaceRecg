@@ -34,22 +34,22 @@ def test(model, test_dataloader, all_dataloader, logger, device, align_type):
     pred = {}
     for idx, dist in enumerate(dists):
         pred[labels[idx]] = 1 if dist < best_threhold else 0
-    print(len(pred))
+    logger.info(len(pred))
     
     f = open(f"test_{align_type}.txt", 'w') 
     for i in range(len(pred)):
-        print(pred[i], file = f)
+        logger.info(pred[i], file = f)
     f.close()
-    print(pred)
+    logger.info(pred)
     
 
 if __name__ == '__main__':
     parse = argparse.ArgumentParser()
     parse.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
     args = parse.parse_args()
-    print('align_type: ', args.type)
-    
     logger = get_logger('test')
+    logger.info('align_type: ', args.type)
+    
     device = 'cuda:7'
     config = OmegaConf.load(f'configs/test_{args.type}.yaml')
     model = instantiation(config.model)

@@ -33,6 +33,8 @@ loss:
 optimizer:
   max_epochs: 50
   warm_up_epochs: 5
+  # min_lr: 1e-6
+  # max_lr: 1e-4
+  # base_lr: 1e-7
   min_lr: 1e-6
-  max_lr: 1e-4
-  base_lr: 1e-7
+  base_lr: 1e-3
