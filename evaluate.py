@@ -26,17 +26,6 @@ def get_dists(model, val_dataloader, device):
             dists += distance.cpu().numpy().tolist()
             labels += batch['label'].cpu().numpy().tolist()
     return dists, labels
-    
-# given threhold, cal the accuracy of all dataset
-def eval_all(model, val_dataloader, device, threshold = -1):
-    dists, labels = get_dists(model, val_dataloader, device)
-    
-    print(len(dists))
-    if threshold == -1:
-        threshold, accuracy = find_best_threhold(np.arange(0, 5, 0.01), dists, labels)
-    else:
-        accuracy = get_accuracy(threshold, dists, labels)
-    return accuracy, threshold
             
 def find_best_threhold(thresholds, dists, labels):
     best_accuracy = 0
@@ -70,7 +59,7 @@ def evaluate(model, val_dataloader, logger, device):
         Thresholds.append(best_threshold)
     print('test accuracy:',Accuracies, 'test threshold:', Thresholds)
     logger.info('Accuracy: {:.4f} Threshold: {:.4f}'.format(np.mean(Accuracies), np.mean(Thresholds)))
-    return np.mean(Accuracies)
+    return np.mean(Accuracies), np.mean(Thresholds)
 
 if __name__ == '__main__':
     logger = get_logger('evaluate')
@@ -86,19 +75,16 @@ if __name__ == '__main__':
         _, _ = model.load_ckpt(model.ckpt_path, logger)
     model.eval()
     model.to(device)
-    
-    all_indexes = json.load(open(f'data/train/{args.type}/all_indexes.json', 'r'))
-    all_indexes = {'val_indexes': all_indexes}
-    
-    all_dataset = instantiation(config.data.validation, all_indexes)
-    all_dataloader = DataLoader(all_dataset,
+
+    _, val_indexes = divide_train_val(seed = 0, align_type = args.type, val_ratio = 0.5)
+    val_dataset = instantiation(config.data.validation, val_indexes)
+    val_dataloader = DataLoader(val_dataset,
                                 batch_size = config.data.batch_size,
                                 shuffle = True, 
                                 num_workers = config.data.num_workers,
                                 pin_memory = True,
                                 drop_last = False)
     
-    accuracy, threshold = eval_all(model, all_dataloader, device)
+    accuracy, threshold = evaluate(model, val_dataloader, logger, device)
     logger.info('Accuracy: {:.4f}, Threshold: {:.4f}'.format(accuracy, threshold))
     
-    # accuracy = evaluate(model, val_dataloader, logger, device)

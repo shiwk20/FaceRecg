@@ -147,7 +147,7 @@ def main():
             if dist.get_rank() == 0 and (epoch + 1) % config.val_interval == 0:
                 # validation
                 model.eval()
-                accuracy = evaluate(model, val_dataloader, logger, device)
+                accuracy, _ = evaluate(model, val_dataloader, logger, device)
                 if accuracy > best_accuracy:
                     accuracy_flag = 0
                     best_accuracy = accuracy

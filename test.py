@@ -10,8 +10,19 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import argparse
 import json
-from evaluate import eval_all, get_dists
+from evaluate import get_dists, find_best_threhold, get_accuracy
 
+# given threhold, cal the accuracy of all dataset
+# or find the best threhold and cal the accuracy of all dataset
+def eval_all(model, dataloader, device, threshold = -1):
+    dists, labels = get_dists(model, dataloader, device)
+    
+    print(len(dists))
+    if threshold == -1:
+        threshold, accuracy = find_best_threhold(np.arange(0, 5, 0.01), dists, labels)
+    else:
+        accuracy = get_accuracy(threshold, dists, labels)
+    return accuracy, threshold
 
 def test(model, test_dataloader, all_dataloader, logger, device, align_type):
     train_accuracy, best_threhold = eval_all(model, all_dataloader, device)
