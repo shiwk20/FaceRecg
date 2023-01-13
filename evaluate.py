@@ -66,6 +66,7 @@ if __name__ == '__main__':
     device = 'cuda:7'
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
+    parser.add_argument('--train_ratio', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
     args = parser.parse_args()
     config_path = f'configs/train_{args.type}.yaml'
     config = OmegaConf.load(config_path)
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     model.eval()
     model.to(device)
 
-    _, val_indexes = divide_train_val(seed = 0, align_type = args.type, val_ratio = 0.5)
+    _, val_indexes = divide_train_val(seed = 0, align_type = args.type, train_ratio = args.train_ratio)
     val_dataset = instantiation(config.data.validation, val_indexes)
     val_dataloader = DataLoader(val_dataset,
                                 batch_size = config.data.batch_size,
