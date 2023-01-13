@@ -198,7 +198,7 @@ def train(optimizer, scheduler, epoch, model, criterion, train_dataloader, logge
         tqdm_iter.set_description('Epoch: {}, Loss: {:.4f}, lr: {:.6f}, Count: {}'.format(epoch, loss, optimizer.param_groups[0]['lr'], count))
     
     scheduler.step()
-    logger.info('counter: ', counter)
+    logger.info('counter: {}'.format(counter))
     if counter < 50:
         Flag = True
     return (ave_loss / counter, Flag) if counter != 0 else (0, Flag)
