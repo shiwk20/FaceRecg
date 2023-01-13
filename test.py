@@ -38,7 +38,7 @@ def test(model, test_dataloader, all_dataloader, logger, device, align_type):
     
     f = open(f"test_{align_type}.txt", 'w') 
     for i in range(len(pred)):
-        logger.info(pred[i], file = f)
+        print(pred[i], file = f)
     f.close()
     logger.info(pred)
     
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     parse.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
     args = parse.parse_args()
     logger = get_logger('test')
-    logger.info('align_type: ', args.type)
+    logger.info('align_type: {}'.format(args.type))
     
     device = 'cuda:7'
     config = OmegaConf.load(f'configs/test_{args.type}.yaml')

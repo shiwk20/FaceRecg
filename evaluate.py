@@ -54,10 +54,10 @@ def evaluate(model, val_dataloader, logger, device):
     
     for train_indexes, test_indexes in kf.split(dists):
         best_threshold, best_accuracy = find_best_threhold(thresholds, np.array(dists)[train_indexes], np.array(labels)[train_indexes])
-        logger.info('best acc on train_set:', best_accuracy, 'best threshold on train set:', best_threshold)
+        logger.info('best acc on train_set: {}, best threshold on train set: {}'.format(best_accuracy, best_threshold))
         Accuracies.append(get_accuracy(best_threshold, np.array(dists)[test_indexes], np.array(labels)[test_indexes]))
         Thresholds.append(best_threshold)
-    logger.info('test accuracy:',Accuracies, 'test threshold:', Thresholds)
+    logger.info('test accuracy: {}, test threshold: {}'.format(Accuracies, Thresholds))
     logger.info('Accuracy: {:.4f} Threshold: {:.4f}'.format(np.mean(Accuracies), np.mean(Thresholds)))
     return np.mean(Accuracies), np.mean(Thresholds)
 
@@ -66,7 +66,8 @@ if __name__ == '__main__':
     device = 'cuda:7'
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--type', help = 'align type(mtcnn or landmark), default: mtcnn', type = str, default = 'mtcnn')
-    parser.add_argument('--train_ratio', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
+    parser.add_argument('-r', '--train_ratio', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
+    parser.add_argument('-s', '--seed', help = 'align type(mtcnn or landmark), default: mtcnn', type = int, default = 0.8)
     args = parser.parse_args()
     config_path = f'configs/train_{args.type}.yaml'
     config = OmegaConf.load(config_path)
