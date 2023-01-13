@@ -73,7 +73,7 @@ def divide_train_val(seed, align_type, train_ratio = 0.8, local_rank = 0):
         val_indexes_tmp[key] = all_indexes[key]
     
     if local_rank == 0:
-        json.dump(train_indexes_tmp, open(f'data/train/{align_type}/train_indexes.json', 'w'), indent=4)
-        json.dump(val_indexes_tmp, open(f'data/train/{align_type}/val_indexes.json', 'w'),  indent=4)
+        json.dump(train_indexes_tmp, open(f'data/train/{align_type}/indexes/train_indexes.json', 'w'), indent=4)
+        json.dump(val_indexes_tmp, open(f'data/train/{align_type}/indexes/val_indexes.json', 'w'),  indent=4)
     
     return train_indexes_tmp, val_indexes_tmp

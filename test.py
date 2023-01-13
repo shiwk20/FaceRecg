@@ -66,7 +66,7 @@ if __name__ == '__main__':
                                 pin_memory = True,
                                 drop_last = False)
 
-    all_indexes = json.load(open(f'data/train/{args.type}/all_indexes.json', 'r'))
+    all_indexes = json.load(open(f'data/train/{args.type}/indexes/all_indexes.json', 'r'))
     all_indexes = {'val_indexes': all_indexes}
     
     all_dataset = instantiation(config.data.validation, all_indexes)
