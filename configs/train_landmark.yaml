@@ -21,7 +21,7 @@ data:
   validation:
     dest: dataset.TripletValDataset
     paras: 
-      pairs_num: 5000
+      pairs_num: 8000
       align_type: 'landmark'
       align_size: 112, 112
 
