@@ -131,10 +131,10 @@ def main():
     
     # optimizer
     params = list(model.module.parameters())
-    optimizer = torch.optim.AdamW(params = params, lr = config.optimizer.max_lr)
+    optimizer = torch.optim.AdamW(params = params, lr = config.optimizer.base_lr)
     if optim_state_dict is not None:
         optimizer.load_state_dict(optim_state_dict)
-    lambda_lr = lambda epoch: ((config.optimizer.base_lr - config.optimizer.max_lr) / config.optimizer.warm_up_epochs * epoch + config.optimizer.max_lr) / config.optimizer.max_lr if epoch < config.optimizer.warm_up_epochs else (config.optimizer.min_lr + 0.5 * (config.optimizer.base_lr - config.optimizer.min_lr) * (1 + np.cos((epoch - config.optimizer.warm_up_epochs) / (config.optimizer.max_epochs - config.optimizer.warm_up_epochs) * np.pi))) / config.optimizer.max_lr
+    lambda_lr = lambda epoch: ((config.optimizer.max_lr - config.optimizer.base_lr) / config.optimizer.warm_up_epochs * epoch + config.optimizer.base_lr) / config.optimizer.base_lr if epoch < config.optimizer.warm_up_epochs else (config.optimizer.min_lr + 0.5 * (config.optimizer.max_lr - config.optimizer.min_lr) * (1 + np.cos((epoch - config.optimizer.warm_up_epochs) / (config.optimizer.max_epochs - config.optimizer.warm_up_epochs) * np.pi))) / config.optimizer.base_lr
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda = lambda_lr, last_epoch=cur_epoch - 1)
     # start loop
     best_accuracy = 0
