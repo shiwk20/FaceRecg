@@ -57,7 +57,7 @@ def get_train_indexes(align_type):
         train_indexes[train_data[0]] = train_data[1]
     return train_indexes
 
-def divide_train_val(seed, align_type, train_ratio = 0.8, local_rank = 0):
+def divide_train_val(seed, align_type, train_ratio = 0.9, device = 0):
     all_indexes = get_train_indexes(align_type)
     
     random.seed(seed)
@@ -72,7 +72,7 @@ def divide_train_val(seed, align_type, train_ratio = 0.8, local_rank = 0):
     for key in val_indexes:
         val_indexes_tmp[key] = all_indexes[key]
     
-    if local_rank == 0:
+    if device == 0:
         json.dump(train_indexes_tmp, open(f'data/train/{align_type}/indexes/train_indexes.json', 'w'), indent=4)
         json.dump(val_indexes_tmp, open(f'data/train/{align_type}/indexes/val_indexes.json', 'w'),  indent=4)
     

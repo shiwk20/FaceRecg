@@ -70,8 +70,8 @@ def init_distributed_mode(args):
     torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)
     
-def update_dataloader(divide_seed, align_type, config, local_rank):
-    train_indexes, val_indexes = divide_train_val(seed = divide_seed, align_type=align_type, local_rank = local_rank)
+def get_dataloader(align_type, config, device):
+    train_indexes, val_indexes = divide_train_val(seed = config.data.divide_seed, align_type = align_type, train_ratio = config.data.train_ratio, device = device)
     train_indexes = {'train_indexes': train_indexes}
     val_indexes = {'val_indexes': val_indexes}
     
@@ -123,6 +123,9 @@ def main():
     model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
     model = nn.parallel.DistributedDataParallel(model, broadcast_buffers = False, find_unused_parameters = True)
 
+    # data
+    train_sampler, train_dataloader, val_dataloader = get_dataloader(args.type, config, device)
+    
     # criterion
     criterion = instantiation(config.loss)
     
@@ -139,11 +142,10 @@ def main():
     counter_flag = 0
     try:
         for epoch in range(cur_epoch, config.optimizer.max_epochs):
-            train_sampler, train_dataloader, val_dataloader = update_dataloader(divide_seed = epoch, align_type=args.type,config = config, local_rank = dist.get_rank())
             train_sampler.set_epoch(epoch)
             # train
             model.train()
-            epoch_loss, Flag = train(optimizer, scheduler, epoch, model, criterion, train_dataloader)
+            epoch_loss, Flag = train(optimizer, scheduler, epoch, model, criterion, train_dataloader, logger)
             if dist.get_rank() == 0 and (epoch + 1) % config.val_interval == 0:
                 # validation
                 model.eval()
@@ -155,7 +157,7 @@ def main():
                     model.module.save_ckpt(model.module.save_ckpt_path, epoch + 1, best_accuracy, optimizer, logger, start_time)
                 else:
                     accuracy_flag += 1
-                    print('accuracy_flag: {}'.format(accuracy_flag))
+                    logger.info('accuracy_flag: {}'.format(accuracy_flag))
                     if accuracy_flag >= 5:
                         break
                 logger.info('Epoch: {}, Loss: {:.4f}, Accuracy: {:.4f}, Best Accuracy: {:.4f}'.format(epoch, epoch_loss, accuracy, best_accuracy))
@@ -164,19 +166,19 @@ def main():
 
             if Flag:
                 counter_flag += 1
-                print('counter_flag: {}'.format(counter_flag))
+                logger.info('counter_flag: {}'.format(counter_flag))
             else:
                 counter_flag = 0
             if counter_flag >= 5:
                 break
     except Exception as e:
-        print(e)
+        logger.error(e)
     finally:
         if dist.get_rank() == 0:
             logger.info('Final Best Accuracy: {:.4f}'.format(best_accuracy))
             model.module.save_ckpt(model.module.save_ckpt_path, -1, best_accuracy, optimizer, logger, start_time)
     
-def train(optimizer, scheduler, epoch, model, criterion, train_dataloader):
+def train(optimizer, scheduler, epoch, model, criterion, train_dataloader, logger):
     # loss of an epoch
     ave_loss = 0
     counter = 0
@@ -196,7 +198,7 @@ def train(optimizer, scheduler, epoch, model, criterion, train_dataloader):
         tqdm_iter.set_description('Epoch: {}, Loss: {:.4f}, lr: {:.6f}, Count: {}'.format(epoch, loss, optimizer.param_groups[0]['lr'], count))
     
     scheduler.step()
-    print('counter: ', counter)
+    logger.info('counter: ', counter)
     if counter < 50:
         Flag = True
     return (ave_loss / counter, Flag) if counter != 0 else (0, Flag)
