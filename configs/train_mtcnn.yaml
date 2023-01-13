@@ -11,7 +11,7 @@ data:
   train_ratio: 0.85
   divide_seed: 0
   batch_size: 256
-  num_workers: 0
+  num_workers: 8
   train:
     dest: dataset.TripletTrainDataset
     paras: 
