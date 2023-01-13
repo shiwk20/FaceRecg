@@ -32,5 +32,8 @@ loss:
 
 optimizer:
   max_epochs: 50
+  max_epochs: 50
+  linear_epochs: 5
   min_lr: 1e-6
-  base_lr: 5e-4
+  max_lr: 1e-3
+  base_lr: 1e-4
