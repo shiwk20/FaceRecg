@@ -65,6 +65,7 @@ def eval_mtcnn():
                 cv2.imwrite(os.path.join(save_path, name, img), image)
 
 if __name__ == '__main__':
-    # merge_mtcnn()
+    merge_mtcnn()
+    
     eval_mtcnn()
     pass
